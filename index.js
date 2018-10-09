@@ -2,11 +2,14 @@ const puppeteer = require('puppeteer');
 const [ WIDTH, HEIGHT ] = [ 1400, 900 ];
 
 (async () => {
-    const productUrl = 'https://www.nike.com/tw/t/hyperdunk-10-%E7%B1%83%E7%90%83-Vhj1Vz/AO7893-002'
+    const productUrl = 'https://www.nike.com/tw/t/air-vapormax-flyknit-2-%E8%B7%91-G3h93J/942843-203'
     const browser = await puppeteer.launch({headless: false, devtools: true, args: [
         `--window-size=${ WIDTH + 500 },${ HEIGHT }`,
         `--disk-cache-size=0`
     ]});
+    const testPage = await browser.newPage();
+    await testPage.setViewport({ width: WIDTH, height: HEIGHT })
+    testPage.goto('https://www.nike.com/tw/zh_tw/');
 	const page = await browser.newPage();
 	await page.setViewport({ width: WIDTH, height: HEIGHT })
 	await page.goto(productUrl);
@@ -22,7 +25,7 @@ const [ WIDTH, HEIGHT ] = [ 1400, 900 ];
 
 const orderScript = async () => {
     window.scrollTo(0, 100);
-	const selectedSize = ['8']
+	const selectedSize = ['9']
     const qty = [1]
     // 個人設定
     const allData = JSON.parse($('script[type="application/ld+json"]').text());
@@ -93,19 +96,22 @@ const autoFillForm = async (browser) => {
         firstName: 'firstName',
         postCode: '103',
         country: '臺北市',
-        town: '新北',
+        town: '新北市',
         address: '我家',
-        phone: '09999999',
+        phone: '0933963311',
         govermentId: 'N126666666',
         email: 'a9999@gmail.com'
     }
     const buyCartPage = await browser.newPage()
     await buyCartPage.setViewport({ width: WIDTH, height: HEIGHT })
-    buyCartPage.goto("https://secure-store.nike.com/TW/checkout/html/index.jsp?l=checkout&country=TW&lang_locale=zh_tw&site=nikestore")
+    await buyCartPage.goto("https://secure-store.nike.com/TW/checkout/html/index.jsp?l=checkout&country=TW&lang_locale=zh_tw&site=nikestore", { waitUntil: 'networkidle2' })
+    // await buyCartPage.waitForNavigation({'waitUntil': 'networkidle0'});
+    await buyCartPage.waitForSelector('.order-content');
+    // await buyCartPage.waitFor(200)
     await buyCartPage.type('#Shipping_LastName', formData.lastName);
     await buyCartPage.type('#Shipping_FirstName', formData.lastName);
     await buyCartPage.type('#Shipping_PostCode', formData.postCode);
-    await buyCartPage.select('#telCountryInput', formData.country)
+    await buyCartPage.select('#Shipping_Territory', formData.country)
     await buyCartPage.type('#Shipping_Address3', formData.town);
     await buyCartPage.type('#Shipping_Address1', formData.address);
     await buyCartPage.type('#Shipping_phonenumber', formData.phone);
@@ -113,4 +119,6 @@ const autoFillForm = async (browser) => {
     await buyCartPage.type('#shipping_Email', formData.email);
     await buyCartPage.click('.checkbox-checkmark')
     await buyCartPage.click('#shippingSubmit')
+    await buyCartPage.click('#billingSubmit')
+    await buyCartPage.waitForSelector('#CreditCardInfo');
 }
