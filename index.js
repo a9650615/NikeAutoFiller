@@ -2,7 +2,7 @@ const puppeteer = require('puppeteer');
 const [ WIDTH, HEIGHT ] = [ 1400, 900 ];
 
 (async () => {
-    const productUrl = 'https://www.nike.com/tw/t/air-vapormax-flyknit-2-%E8%B7%91-G3h93J/942843-203'
+    const productUrl = 'https://www.nike.com/tw/t/zoom-pegasus-turbo-%E7%94%B7%E6%AC%BE%E8%B7%91-tQ4rLj/AJ4114-486'
     const browser = await puppeteer.launch({headless: false, devtools: true, args: [
         `--window-size=${ WIDTH + 500 },${ HEIGHT }`,
         `--disk-cache-size=0`
@@ -26,7 +26,6 @@ const [ WIDTH, HEIGHT ] = [ 1400, 900 ];
 const orderScript = async () => {
     window.scrollTo(0, 100);
 	const selectedSize = ['9']
-    const qty = [1]
     // 個人設定
     const allData = JSON.parse($('script[type="application/ld+json"]').text());
     const skuList = []
@@ -95,12 +94,17 @@ const autoFillForm = async (browser) => {
         lastName: 'lastName',
         firstName: 'firstName',
         postCode: '103',
-        country: '臺北市',
+        country: '17',
         town: '新北市',
         address: '我家',
         phone: '0933963311',
         govermentId: 'N126666666',
-        email: 'a9999@gmail.com'
+        email: 'a9999@gmail.com',
+        creditName: 'MingYou Tsai',
+        creditNumber: '10555599668',
+        creditMonth: '09',
+        creditYear: '2023',
+        CCCVC: '520'
     }
     const buyCartPage = await browser.newPage()
     await buyCartPage.setViewport({ width: WIDTH, height: HEIGHT })
@@ -117,8 +121,19 @@ const autoFillForm = async (browser) => {
     await buyCartPage.type('#Shipping_phonenumber', formData.phone);
     await buyCartPage.type('#governmentid', formData.govermentId);
     await buyCartPage.type('#shipping_Email', formData.email);
-    await buyCartPage.click('.checkbox-checkmark')
+    await buyCartPage.click('.gdpr-inner-section > .checkbox-container input[type=checkbox]')
+    await buyCartPage.waitForSelector('#shippingSubmit');
     await buyCartPage.click('#shippingSubmit')
+    await buyCartPage.waitFor(200)
     await buyCartPage.click('#billingSubmit')
-    await buyCartPage.waitForSelector('#CreditCardInfo');
+    await buyCartPage.waitFor(10000)
+    // await buyCartPage.waitForSelector('#CreditCardHolder');
+    // fill credit card
+    console.log('fill it')
+    await buyCartPage.type('#CreditCardHolder', formData.creditName);
+    await buyCartPage.type('#KKnr', formData.creditNumber);
+    await buyCartPage.select('#KKMonth', formData.creditMonth);
+    await buyCartPage.select('#KKYear', formData.creditYear);
+    await buyCartPage.type('#CCCVC', formData.CCCVC);
+    //  await buyCartPage.click('#BtnPurchase')
 }
