@@ -1,8 +1,9 @@
 const puppeteer = require('puppeteer');
+const config = require('./fillData');
 const [ WIDTH, HEIGHT ] = [ 1400, 900 ];
 
 (async () => {
-    const productUrl = 'https://www.nike.com/tw/t/zoom-pegasus-turbo-%E7%94%B7%E6%AC%BE%E8%B7%91-tQ4rLj/AJ4114-486'
+    const productUrl = config.productUrl
     const browser = await puppeteer.launch({headless: false, devtools: true, args: [
         `--window-size=${ WIDTH + 500 },${ HEIGHT }`,
         `--disk-cache-size=0`
@@ -16,16 +17,16 @@ const [ WIDTH, HEIGHT ] = [ 1400, 900 ];
 	await page.addScriptTag({url: 'https://code.jquery.com/jquery-3.2.1.min.js'})
   //await page.screenshot({path: 'example.png'});
     await page.click('.addToCartBtn');
-	await page.evaluate(orderScript)
+	await page.evaluate(orderScript, config)
 	await autoFillForm(browser)
 	
 	// console.log(skuData)
   //await browser.close();
 })();
 
-const orderScript = async () => {
+const orderScript = async (config) => {
     window.scrollTo(0, 100);
-	const selectedSize = ['9']
+    const selectedSize = config.selectSize
     // 個人設定
     const allData = JSON.parse($('script[type="application/ld+json"]').text());
     const skuList = []
@@ -90,22 +91,7 @@ const orderScript = async () => {
 }
 
 const autoFillForm = async (browser) => {
-    const formData = {
-        lastName: 'lastName',
-        firstName: 'firstName',
-        postCode: '103',
-        country: '17',
-        town: '新北市',
-        address: '我家',
-        phone: '0933963311',
-        govermentId: 'N126666666',
-        email: 'a9999@gmail.com',
-        creditName: 'MingYou Tsai',
-        creditNumber: '10555599668',
-        creditMonth: '09',
-        creditYear: '2023',
-        CCCVC: '520'
-    }
+    const formData = config.info
     const buyCartPage = await browser.newPage()
     await buyCartPage.setViewport({ width: WIDTH, height: HEIGHT })
     await buyCartPage.goto("https://secure-store.nike.com/TW/checkout/html/index.jsp?l=checkout&country=TW&lang_locale=zh_tw&site=nikestore", { waitUntil: 'networkidle2' })
@@ -121,16 +107,17 @@ const autoFillForm = async (browser) => {
     await buyCartPage.type('#Shipping_phonenumber', formData.phone);
     await buyCartPage.type('#governmentid', formData.govermentId);
     await buyCartPage.type('#shipping_Email', formData.email);
-    await buyCartPage.click('.gdpr-inner-section > .checkbox-container input[type=checkbox]')
+    await buyCartPage.waitFor(300)
+    await buyCartPage.click('#gdprSection .checkbox-checkmark')
     await buyCartPage.waitForSelector('#shippingSubmit');
     await buyCartPage.click('#shippingSubmit')
     await buyCartPage.waitFor(200)
     await buyCartPage.click('#billingSubmit')
-    await buyCartPage.waitFor(10000)
+    await buyCartPage.waitFor(20000)
     // await buyCartPage.waitForSelector('#CreditCardHolder');
     // fill credit card
     console.log('fill it')
-    await buyCartPage.type('#CreditCardHolder', formData.creditName);
+    await buyCartPage.type('input#CreditCardHolder', formData.creditName);
     await buyCartPage.type('#KKnr', formData.creditNumber);
     await buyCartPage.select('#KKMonth', formData.creditMonth);
     await buyCartPage.select('#KKYear', formData.creditYear);
