@@ -93,6 +93,7 @@ const orderScript = async (config) => {
 const autoFillForm = async (browser) => {
     const formData = config.info
     const buyCartPage = await browser.newPage()
+    await buyCartPage.addScriptTag({url: 'https://code.jquery.com/jquery-3.2.1.min.js'})
     await buyCartPage.setViewport({ width: WIDTH, height: HEIGHT })
     await buyCartPage.goto("https://secure-store.nike.com/TW/checkout/html/index.jsp?l=checkout&country=TW&lang_locale=zh_tw&site=nikestore", { waitUntil: 'networkidle2' })
     // await buyCartPage.waitForNavigation({'waitUntil': 'networkidle0'});
@@ -117,10 +118,25 @@ const autoFillForm = async (browser) => {
     // await buyCartPage.waitForSelector('#CreditCardHolder');
     // fill credit card
     console.log('fill it')
-    await buyCartPage.type('input#CreditCardHolder', formData.creditName);
-    await buyCartPage.type('#KKnr', formData.creditNumber);
-    await buyCartPage.select('#KKMonth', formData.creditMonth);
-    await buyCartPage.select('#KKYear', formData.creditYear);
-    await buyCartPage.type('#CCCVC', formData.CCCVC);
+    await buyCartPage.evaluate((formData) => {
+        const timerInput = setInterval(() => {
+            console.log(document.querySelector('#CreditCardInfo'))
+            if ($('#CreditCardInfo').length > 0) {
+                $('#CreditCardInfo #CreditCardHolder').val(formData.creditName)
+                $('#CreditCardInfo #KKnr').val(formData.creditNumber)
+                $('#CreditCardInfo #KKMonth').val(formData.creditMonth)
+                $('#CreditCardInfo #KKYear').val(formData.creditYear)
+                $('#CreditCardInfo #CCCVC').val(formData.CCCVC)
+                clearInterval(timerInput)
+                console.log('filled')
+            }
+        }, 500)
+        console.log(formData)
+    }, formData)
+    // await buyCartPage.type('input#CreditCardHolder', formData.creditName);
+    // await buyCartPage.type('#KKnr', formData.creditNumber);
+    // await buyCartPage.select('#KKMonth', formData.creditMonth);
+    // await buyCartPage.select('#KKYear', formData.creditYear);
+    // await buyCartPage.type('#CCCVC', formData.CCCVC);
     //  await buyCartPage.click('#BtnPurchase')
 }
