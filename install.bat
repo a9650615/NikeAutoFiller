@@ -1,3 +1,3 @@
 @echo off
-yarn
+npm install -g yarn && yarn
 pause
