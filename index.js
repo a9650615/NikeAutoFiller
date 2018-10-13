@@ -6,7 +6,8 @@ const [ WIDTH, HEIGHT ] = [ 1400, 900 ];
     const productUrl = config.productUrl
     const browser = await puppeteer.launch({headless: false, devtools: true, args: [
         `--window-size=${ WIDTH + 500 },${ HEIGHT }`,
-        `--disk-cache-size=0`
+        `--disk-cache-size=0`,
+        `--disable-site-isolation-trials`
     ]});
     const testPage = await browser.newPage();
     await testPage.setViewport({ width: WIDTH, height: HEIGHT })
@@ -108,7 +109,7 @@ const autoFillForm = async (browser) => {
     await buyCartPage.type('#Shipping_phonenumber', formData.phone);
     await buyCartPage.type('#governmentid', formData.govermentId);
     await buyCartPage.type('#shipping_Email', formData.email);
-    await buyCartPage.waitFor(300)
+    await buyCartPage.waitForSelector('.checkbox-checkmark',{visible:true,timeout:45000});
     await buyCartPage.click('#gdprSection .checkbox-checkmark')
     await buyCartPage.waitForSelector('#shippingSubmit');
     await buyCartPage.click('#shippingSubmit')
@@ -118,25 +119,76 @@ const autoFillForm = async (browser) => {
     // await buyCartPage.waitForSelector('#CreditCardHolder');
     // fill credit card
     console.log('fill it')
-    await buyCartPage.evaluate((formData) => {
-        const timerInput = setInterval(() => {
-            console.log(document.querySelector('#CreditCardInfo'))
-            if ($('#CreditCardInfo').length > 0) {
-                $('#CreditCardInfo #CreditCardHolder').val(formData.creditName)
-                $('#CreditCardInfo #KKnr').val(formData.creditNumber)
-                $('#CreditCardInfo #KKMonth').val(formData.creditMonth)
-                $('#CreditCardInfo #KKYear').val(formData.creditYear)
-                $('#CreditCardInfo #CCCVC').val(formData.CCCVC)
-                clearInterval(timerInput)
-                console.log('filled')
-            }
-        }, 500)
-        console.log(formData)
-    }, formData)
+    // await buyCartPage.evaluate((formData) => {
+    //     const iframe = $('#paymentIFrame')
+    //     const timerInput = setInterval(() => {
+    //         console.log("waiting")
+    //         // if (typeof SSLForm != "undefined") {
+    //         //     console.log(SSLForm)
+    //         //     clearInterval(timerInput)
+    //         // }
+    //         if ($('#CreditCardInfo', iframe.contents()).length > 0) {
+    //             clearInterval(timerInput)
+    //             $('#CreditCardInfo #CreditCardHolder', iframe.contents()).val(formData.creditName)
+    //             $('#CreditCardInfo #KKnr', iframe.contents()).val(formData.creditNumber)
+    //             $('#CreditCardInfo #KKMonth', iframe.contents()).val(formData.creditMonth)
+    //             $('#CreditCardInfo #KKYear', iframe.contents()).val(formData.creditYear)
+    //             $('#CreditCardInfo #CCCVC', iframe.contents()).val(formData.CCCVC)
+    //             console.log('filled')
+    //         }
+    //     }, 500)
+    //     console.log(formData)
+    // }, formData)
+    //const iFrameLoaded = waitForIFrameLoad(buyCartPage, '#paymentIFrame')
+    //await iFrameLoaded;
+    await buyCartPage.waitForSelector('#paymentIFrame',{visible:true,timeout:45000});
+    /*const myFrame = await buyCartPage.$('#paymentIFrame')
+    const mainFrame = myFrame._mainFrame
+    console.log(mainFrame.name())
+    console.log(await myFrame.$('#CreditCardHolder'))
+    console.log(await mainFrame.$('#CreditCardHolder'))
+    */
+   var frames = await buyCartPage.frames();
+    var myframe = frames.find(
+        f =>
+            f.url().indexOf("paygate") > 0);
+    //await myframe.waitForSelector('#CreditCardHolder');
+    const creditNumber = await myframe.$("#CreditCardHolder");
+    await creditNumber.type(formData.creditName);
+    const kknr = await myframe.$("#KKnr");
+    await kknr.type(formData.creditNumber);
+    const cccvc = await myframe.$("#CCCVC");
+    await cccvc.type(formData.CCCVC);
+    const kkMonth = await myframe.$("#KKMonth");
+    await kkMonth.type(formData.creditMonth);
+    const kkYear = await myframe.$("#KKYear");
+    await kkYear.type(formData.creditYear);
+    await myframe.click('#BtnPurchase')
+    // const frames = await buyCartPage.frames();
+    // console.log(frames)
     // await buyCartPage.type('input#CreditCardHolder', formData.creditName);
     // await buyCartPage.type('#KKnr', formData.creditNumber);
     // await buyCartPage.select('#KKMonth', formData.creditMonth);
     // await buyCartPage.select('#KKYear', formData.creditYear);
     // await buyCartPage.type('#CCCVC', formData.CCCVC);
     //  await buyCartPage.click('#BtnPurchase')
+}
+
+function waitForIFrameLoad(page, iframeSelector, timeout = 10000) {
+    // if pageFunction returns a promise, $eval will wait for its resolution
+   return this.page.$eval(
+     iFrameSelector,
+     (el, timeout) => {
+       const p = new Promise((resolve, reject) => {
+         el.onload = () => {
+           resolve()
+         }
+         setTimeout(() => {
+           reject(new Error("Waiting for iframe load has timed out"))
+         }, timeout)
+       })
+       return p
+     },
+     timeout,
+   )
 }
