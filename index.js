@@ -1,6 +1,18 @@
+const fs = require('fs');
+const path = require('path');
 const puppeteer = require('puppeteer');
-const config = require('./fillData');
+const isLocal = typeof process.pkg === 'undefined';
+const basePath = isLocal ? process.cwd() : path.dirname(process.execPath);
+var config = JSON.parse(fs.readFileSync(`${basePath}/fillData.json`, 'utf8'));
 const [ WIDTH, HEIGHT ] = [ 1400, 900 ];
+const chromiumExecutablePath = (!isLocal
+    ? puppeteer.executablePath().replace(
+        /^.*?\/node_modules\/puppeteer\/\.local-chromium/,
+        path.join(path.dirname(process.execPath), 'chromium')
+      )
+    : puppeteer.executablePath()
+  );
+
 
 (async () => {
     const productUrl = config.productUrl

@@ -1,0 +1,20 @@
+{
+    "productUrl": "https://www.nike.com/tw/t/air-vapormax-flyknit-2-%E7%94%B7%E6%AC%BE%E8%B7%91-GT7Dkz/942842-401",
+    "selectSize": ["9"],
+    "info": {
+        "lastName": "lastName",
+        "firstName": "firstName",
+        "postCode": "103",
+        "country": "17",
+        "town": "新北市",
+        "address": "我家",
+        "phone": "0933963311",
+        "govermentId": "N126666666",
+        "email": "a9999@gmail.com",
+        "creditName": "MingYou Tsai",
+        "creditNumber": "10555599668",
+        "creditMonth": "09",
+        "creditYear": "2023",
+        "CCCVC": "520"
+    }
+}
